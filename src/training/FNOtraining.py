@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from src.models.FNO import FNO1d
 
-data_path = "../../data/"
+data_path = "../../data/task1/"
 torch.manual_seed(0)
 np.random.seed(0)
 
