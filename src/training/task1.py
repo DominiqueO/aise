@@ -32,6 +32,7 @@ for i in range(5):
     plt.plot(x_data.squeeze().numpy(), y_data[np.random.randint(0, len(y_data) - 1), i], label="t=" + str(i/4))
 
 plt.legend()
+plt.savefig("../../deliverables/task1_1.pdf", format="pdf")
 plt.show()
 
 # Make
@@ -64,7 +65,8 @@ scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamm
 l = torch.nn.MSELoss()
 freq_print = 1
 
-fno, loss_history, relative_l2 = Train.train_NN(fno, optimizer, scheduler, l, training_set, testing_set, epochs, freq_print)
+fno, loss_history, relative_l2 = Train.train_NN(fno, optimizer, scheduler, l, training_set, testing_set, epochs,
+                                                freq_print, save=False, save_name="1dFNO")
 
 # Plot predicted function for visual check
 idx_data = 10
@@ -77,4 +79,5 @@ plt.grid(True, which="both", ls=":")
 plt.plot(input_function_test_n[0,:,1].detach(), output_function_test_n[0].detach(), label="True Solution", c="C0", lw=2)
 plt.scatter(input_function_test_n[0,:,1].detach(), output_function_test_pred_n[0].detach(), label="Approximate Solution", s=8, c="C1")
 plt.legend()
+plt.savefig("../../deliverables/task1_2.pdf", format="pdf")
 plt.show()
