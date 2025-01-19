@@ -2,13 +2,13 @@
 import torch
 
 def train_NN(model, optimizer, scheduler, loss, training_set, testing_set, epochs=50, freq_print=1, save=False,
-             save_name='default'):
+             save_name='default', squeeze_dim=2):
     loss_history = []
     for epoch in range(epochs):
         train_mse = 0.0
         for step, (input_batch, output_batch) in enumerate(training_set):
             optimizer.zero_grad()
-            output_pred_batch = model(input_batch).squeeze(2)
+            output_pred_batch = model(input_batch).squeeze(squeeze_dim)
             loss_f = loss(output_pred_batch, output_batch)
             loss_f.backward()
             optimizer.step()
@@ -21,7 +21,7 @@ def train_NN(model, optimizer, scheduler, loss, training_set, testing_set, epoch
             model.eval()
             test_relative_l2 = 0.0
             for step, (input_batch, output_batch) in enumerate(testing_set):
-                output_pred_batch = model(input_batch).squeeze(2)
+                output_pred_batch = model(input_batch).squeeze(squeeze_dim)
                 loss_f = (torch.mean((output_pred_batch - output_batch) ** 2) / torch.mean(
                     output_batch ** 2)) ** 0.5 * 100
                 test_relative_l2 += loss_f.item()
