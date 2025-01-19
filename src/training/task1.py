@@ -66,9 +66,14 @@ l = torch.nn.MSELoss()
 freq_print = 1
 
 fno, loss_history, relative_l2 = Train.train_NN(fno, optimizer, scheduler, l, training_set, testing_set, epochs,
-                                                freq_print, save=False, save_name="1dFNO")
+                                                freq_print, save=False, save_name="1dFNO", squeeze_dim=2)
+
+
+
+
 
 # Plot predicted function for visual check
+fno.eval()
 idx_data = 10
 input_function_test_n = input_function_test[idx_data, :, :].unsqueeze(0)
 output_function_test_n = output_function_test[idx_data, :].unsqueeze(0)
