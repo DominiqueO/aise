@@ -32,5 +32,5 @@ def train_NN(model, optimizer, scheduler, loss, training_set, testing_set, epoch
         loss_history.append(train_mse)
 
     if save:
-        torch.save(model.state_dict(), save_name)
+        torch.save(model.state_dict(), save_name + ".pt")
     return model, loss_history, test_relative_l2
