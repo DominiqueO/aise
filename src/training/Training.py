@@ -4,6 +4,7 @@ import torch
 def train_NN(model, optimizer, scheduler, loss, training_set, testing_set, epochs=50, freq_print=1, save=False,
              save_name='default', squeeze_dim=2):
     loss_history = []
+    l2_history = []
     for epoch in range(epochs):
         train_mse = 0.0
         for step, (input_batch, output_batch) in enumerate(training_set):
@@ -30,7 +31,8 @@ def train_NN(model, optimizer, scheduler, loss, training_set, testing_set, epoch
         if epoch % freq_print == 0: print("######### Epoch:", epoch, " ######### Train Loss:", train_mse,
                                           " ######### Relative L2 Test Norm:", test_relative_l2)
         loss_history.append(train_mse)
+        l2_history.append(test_relative_l2)
 
     if save:
         torch.save(model.state_dict(), save_name + ".pt")
-    return model, loss_history, test_relative_l2
+    return model, loss_history, l2_history
