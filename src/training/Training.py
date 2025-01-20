@@ -24,7 +24,7 @@ def train_NN(model, optimizer, scheduler, loss, training_set, testing_set, epoch
             for step, (input_batch, output_batch) in enumerate(testing_set):
                 output_pred_batch = model(input_batch).squeeze(squeeze_dim)
                 loss_f = (torch.mean((output_pred_batch - output_batch) ** 2) / torch.mean(
-                    output_batch ** 2)) ** 0.5 * 100
+                    output_batch ** 2)) ** 0.5
                 test_relative_l2 += loss_f.item()
             test_relative_l2 /= len(testing_set)
 

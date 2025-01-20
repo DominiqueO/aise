@@ -55,7 +55,7 @@ testing_set = DataLoader(TensorDataset(input_function_test, output_function_test
 
 # Hyperparameters for training
 learning_rate = 0.001
-epochs = 250
+epochs = 10
 step_size = 50
 gamma = 0.5
 
@@ -149,3 +149,18 @@ for res in res_list:
 plt.legend()
 plt.savefig("../../deliverables/task1_5.pdf", format="pdf")
 plt.show()
+
+# %% Subtask 3: Out of distribution (OOD) dataset
+y_data = torch.from_numpy(np.load(data_path + "test_sol_OOD.npy")).type(torch.float32)
+# x_data is inferred from shape of y_data, assuming equal spacing of data points
+x_data = torch.linspace(0, 1, y_data.shape[-1]).type(torch.float32).unsqueeze(0)
+# Expand x_data to size of y_data (i.e. make identical copies of x for each time step t)
+x_data_expanded = x_data.expand(y_data.size(0), -1)
+# Use data at time t=0 to predict data at time t=0
+input_function = torch.stack((y_data[:, 0, :], x_data_expanded), dim=2).type(torch.float32)
+output_function = y_data[:, -1, :] # data at time t=1 as target
+with torch.no_grad():
+    output_function_pred = fno(input_function).squeeze(2)
+
+l2_error = (torch.norm(output_function_pred - output_function, dim=1) / torch.norm(output_function, dim=1)).mean().item()
+print("Average l2 error OOD: {}".format(l2_error))
