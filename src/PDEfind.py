@@ -50,7 +50,7 @@ def compute_derivatives(u, dx, dt):
 
 def ridge_regression_hard_thresholding(Theta, u_t, lambda_reg, threshold):
     """
-    Perform ridge regression with hard thresholding to solve a sparse linear system.
+    Ridge regression with hard thresholding to solve a sparse linear system.
 
     Parameters:
     - Theta: (n_samples, n_features) matrix of candidate terms.
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     figure_path = '../deliverables/' # for figures
 
     # Load data
-    with np.load(data_path + '2.npz') as data:
+    with np.load(data_path + '2.npz') as data: # Change here between 1.npz and 2.npz
         x_data = data['x']
         t_data = data['t']
         u_data = data['u']
@@ -134,13 +134,13 @@ if __name__ == "__main__":
                              shuffle=False)
 
     # Hyperparameters
-    learning_rate = 0.003
-    epochs = 4
+    learning_rate = 0.001
+    epochs = 10
     step_size = 25
     gamma = 0.5
 
     # Initialize model
-    model = FuncApprox(2, 1, 32)
+    model = FuncApprox(2, 1, 16)
 
     optimizer = Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
@@ -231,25 +231,10 @@ if __name__ == "__main__":
                          torch.mul(u, u_xx_square), torch.mul(u_x, u_xx_square), torch.mul(u_xxx, u_xx_square), u_xx_cube, torch.mul(u, u_xxx_square), torch.mul(u_x, u_xxx_square),
                          torch.mul(u_xx, u_xxx_square), u_xxx_cube, torch.mul(torch.mul(u, u_x), u_xx),  torch.mul(torch.mul(u, u_x), u_xxx),  torch.mul(torch.mul(u, u_xx), u_xxx),  torch.mul(torch.mul(u_x, u_xx), u_xxx)    ], dim=1)
 
-    # theta = torch.stack([ones, u, u_x, u_xx, u_xxx])
-    # # Convert theta to numpy
-    # theta = theta.detach().numpy()
-    #
-    # # Generate theta containing al cross-terms
-    # # Get the number of columns in M
-    # n = theta.shape[1]
-    #
-    # # Generate all combinations of columns up to degree 3
-    # columns = []
-    # for degree in range(1, 4):  # Degree 1 to 3
-    #     for combo in combinations_with_replacement(range(n), degree):
-    #         product = np.prod([theta[:, i] for i in combo], axis=0)
-    #         columns.append(product)
-    #
-    # # Stack all columns together
-    # theta = np.hstack([np.ones((theta.shape[0], 1))] + [col.reshape(-1, 1) for col in columns])
+    print(theta.shape)
 
-    threshold = 1e-2
+
+    threshold = 0.5
     lambda_reg = 0.1
     coeff = ridge_regression_hard_thresholding(theta.detach().numpy(), u_t.detach().numpy().reshape([theta.shape[0], 1]), lambda_reg, threshold)
     print(coeff)
