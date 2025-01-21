@@ -1,21 +1,14 @@
-"""Implementation of 1D Fourier Neural Operator
-adapted from:
-https://colab.research.google.com/drive/1dJS57eiof_ZVKm4tPgclNVHa_qP4gAih?usp=sharing#scrollTo=-dFB-dqncmmt
-"""
+
 import torch
-import torch.nn as nn
-import os
 import numpy as np
-from pip._internal import resolution
 from torch.utils.data import DataLoader, TensorDataset
-import torch.nn.functional as F
 from torch.optim import Adam
 import matplotlib.pyplot as plt
 
 from src.models.FNO import FNO1d
 import src.training.Training as Train
 
-data_path = "../../data/task1/"
+data_path = "../data/task1/"
 torch.manual_seed(0)
 np.random.seed(0)
 
@@ -36,7 +29,7 @@ for i in range(5):
     plt.plot(x_data.squeeze().numpy(), y_data[np.random.randint(0, len(y_data) - 1), i], label="t=" + str(i/4))
 
 plt.legend()
-plt.savefig("../../deliverables/task1_1.pdf", format="pdf")
+plt.savefig("../deliverables/task1_1.pdf", format="pdf")
 plt.show()
 
 # Expand x_data to size of y_data (i.e. make identical copies of x for each time step t)
@@ -55,7 +48,7 @@ testing_set = DataLoader(TensorDataset(input_function_test, output_function_test
 
 # Hyperparameters for training
 learning_rate = 0.001
-epochs = 10
+epochs = 250
 step_size = 50
 gamma = 0.5
 
@@ -93,7 +86,7 @@ plt.scatter(input_function_test_n[0,:,1].detach(), output_function_test_pred_n[0
 plt.legend()
 text = 'err={}'.format(relative_l2[-1])
 plt.text(0.2,0.2, text, transform=fig.transFigure)
-plt.savefig("../../deliverables/task1_2.pdf", format="pdf")
+plt.savefig("../deliverables/task1_2.pdf", format="pdf")
 plt.show()
 
 # Plot error history and loss
@@ -104,7 +97,7 @@ plt.ylabel('L2 Error')
 plt.grid(True, which="both", ls=":")
 plt.plot(range(epochs), relative_l2, label="L2 Error")
 plt.legend()
-plt.savefig("../../deliverables/task1_3.pdf", format="pdf")
+plt.savefig("../deliverables/task1_3.pdf", format="pdf")
 plt.show()
 
 # Plot loss history
@@ -115,7 +108,7 @@ plt.ylabel('loss')
 plt.grid(True, which="both", ls=":")
 plt.plot(range(epochs), loss_history, label="Loss")
 plt.legend()
-plt.savefig("../../deliverables/task1_4.pdf", format="pdf")
+plt.savefig("../deliverables/task1_4.pdf", format="pdf")
 plt.show()
 
 
@@ -147,7 +140,7 @@ for res in res_list:
     plt.plot(res, l2_error, 'o', label='error at resolution r={}'.format(res))
 
 plt.legend()
-plt.savefig("../../deliverables/task1_5.pdf", format="pdf")
+plt.savefig("../deliverables/task1_5.pdf", format="pdf")
 plt.show()
 
 # %% Subtask 3: Out of distribution (OOD) dataset
