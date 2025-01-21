@@ -71,6 +71,41 @@ class SpectralConv1d(nn.Module):
         x = torch.fft.irfft(out_ft, n=x.size(-1))
         return x
 
+#---------------------
+# Time-conditional BN:
+#---------------------
+
+class FILM(torch.nn.Module):
+    def __init__(self,
+                channels,
+                use_bn = True):
+        super(FILM, self).__init__()
+        self.channels = channels
+
+        self.inp2scale = nn.Linear(in_features=1, out_features=channels, bias=True)
+        self.inp2bias = nn.Linear(in_features=1, out_features=channels, bias=True)
+
+        self.inp2scale.weight.data.fill_(0)
+        self.inp2scale.bias.data.fill_(1)
+        self.inp2bias.weight.data.fill_(0)
+        self.inp2bias.bias.data.fill_(0)
+
+        if use_bn:
+          self.norm = nn.BatchNorm1d(channels)
+        else:
+          self.norm = nn.Identity()
+
+    def forward(self, x, time):
+
+        x = self.norm(x)
+        time = time.reshape(-1,1).type_as(x)
+        scale     = self.inp2scale(time)
+        bias      = self.inp2bias(time)
+        scale = scale.unsqueeze(2).expand_as(x)
+        bias  = bias.unsqueeze(2).expand_as(x)
+
+        return x * scale + bias
+
 
 class FNO1d(nn.Module):
     def __init__(self, modes, width):
@@ -127,6 +162,79 @@ class FNO1d(nn.Module):
         # x = x[..., :-self.padding]  # pad the domain if input is non-periodic
         x = x.permute(0, 2, 1)
 
+        x = self.linear_layer(x, self.linear_q)
+        x = self.output_layer(x)
+        return x
+
+
+class FNO1dTD(nn.Module):
+    """
+    Time-dependent Fourier Neural operator
+    1. Lift the input to the desire channel dimension by self.fc0 .
+    2. 4 layers of the integral operators u' = (W + K)(u).
+        W defined by self.w; K defined by self.conv .
+    3. Project from the channel space to the output space by self.fc1 and self.fc2 .
+
+    input: the solution of the initial condition and location (a(x), x)
+    input shape: (batchsize, x=s, c=2)
+    output: the solution of a later timestep
+    output shape: (batchsize, x=s, c=1)
+    """
+    def __init__(self, modes, width):
+        super(FNO1dTD, self).__init__()
+
+        self.modes1 = modes
+        self.width = width
+        self.padding = 1  # pad the domain if input is non-periodic
+        self.linear_p = nn.Linear(3, self.width)  # input channel is 3: (u0(x), x, t)
+
+        self.spect1 = SpectralConv1d(self.width, self.width, self.modes1)
+        self.spect2 = SpectralConv1d(self.width, self.width, self.modes1)
+        self.spect3 = SpectralConv1d(self.width, self.width, self.modes1)
+        self.lin0 = nn.Conv1d(self.width, self.width, 1)
+        self.lin1 = nn.Conv1d(self.width, self.width, 1)
+        self.lin2 = nn.Conv1d(self.width, self.width, 1)
+
+        # Time-conditional normalization using FILM
+        self.film1 = FILM(channels=self.width)
+        self.film2 = FILM(channels=self.width)
+        self.film3 = FILM(channels=self.width)
+
+        self.linear_q = nn.Linear(self.width, 32)
+        self.output_layer = nn.Linear(32, 1)
+
+        self.activation = torch.nn.Tanh()
+
+    def fourier_layer(self, x, spectral_layer, conv_layer, film, time):
+        x = spectral_layer(x) + conv_layer(x)
+        x = film(x, time)
+        return self.activation(x)
+
+    def linear_layer(self, x, linear_transformation):
+        return self.activation(linear_transformation(x))
+
+    def forward(self, x, time):
+        """
+        Args:
+            x: Tensor of shape (batch_size, n_points, 2) containing (u0(x), x)
+            time: Tensor of shape (batch_size,) containing the time inputs
+        """
+        # Include time as an input channel
+        time = time.unsqueeze(1).expand(-1, x.shape[1]).unsqueeze(-1)  # Expand time to match input shape
+        x = torch.cat((x, time), dim=-1)  # Shape: (batch_size, n_points, 3)
+
+        # Lift to higher dimension
+        x = self.linear_p(x)  # Shape: (batch_size, n_points, width)
+        x = x.permute(0, 2, 1)  # Shape: (batch_size, width, n_points)
+
+        # Apply Fourier layers with FILM
+        x = self.fourier_layer(x, self.spect1, self.lin0, self.film1, time)
+        x = self.fourier_layer(x, self.spect2, self.lin1, self.film2, time)
+        x = self.fourier_layer(x, self.spect3, self.lin2, self.film3, time)
+
+        x = x.permute(0, 2, 1)  # Shape: (batch_size, n_points, width)
+
+        # Linear transformations
         x = self.linear_layer(x, self.linear_q)
         x = self.output_layer(x)
         return x
